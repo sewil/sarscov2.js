@@ -66,11 +66,13 @@ class App extends React.Component {
       const dY = deathsDataPoints[index2].y
       const rY = recoveredDataPoints[index2].y
       const infectedY = this.getInfectedAmount(confirmedDataPoints, deathsDataPoints, recoveredDataPoints, index2)
+      const dailyNewCasesY = index2 === 0 ? 0 : confirmedDataPoint.y - confirmedDataPoints[index2 - 1].y
       return {
         x: confirmedDataPoint.x,
         activeY: infectedY,
         deathRateY: dY / (rY + dY),
         infectionRateY: index2 === 0 ? 0 : infectedY / this.getInfectedAmount(confirmedDataPoints, deathsDataPoints, recoveredDataPoints, index2 - 1),
+        dailyNewCasesY,
       }
     })
     return {
@@ -80,6 +82,7 @@ class App extends React.Component {
       active: otherDataPoints.map(o => ({ x: o.x, y: o.activeY })),
       deathRate: otherDataPoints.map(o => ({ x: o.x, y: o.deathRateY })),
       infectionRate: otherDataPoints.map(o => ({ x: o.x, y: o.infectionRateY })),
+      dailyNewCases: otherDataPoints.map(o => ({ x: o.x, y: o.dailyNewCasesY })),
     }
   }
 
@@ -95,95 +98,92 @@ class App extends React.Component {
     this.setState({ data, total })
   }
 
-  renderChart = (dataPoints, title, axisYOptions) => {
+  renderChart = (data, title, axisYOptions) => {
     const options = {
       animationEnabled: true,
-      title:{
+      title: {
         text: title
       },
       axisY : {
-        title: "Amount",
         includeZero: false,
         ...axisYOptions
       },
       toolTip: {
         shared: true
       },
-      data: [
-        {
-          color: "red",
-          type: "spline",
-          name: "Deaths",
-          showInLegend: true,
-          dataPoints: dataPoints.deaths
-        },
-        {
-          color: "green",
-          type: "spline",
-          name: "Recovered",
-          showInLegend: true,
-          dataPoints: dataPoints.recovered
-        },
-        {
-          color: "orange",
-          type: "spline",
-          name: "Infected",
-          showInLegend: true,
-          dataPoints: dataPoints.active
-        }
-      ]
+      data
     }
     return (
       <CanvasJSChart options={options} />
     )
   }
 
-  renderRateChart = (dataPoints) => {
-    const options = {
-      animationEnabled: true,
-      title:{
-        text: 'Rates'
+  getLinearDataPoints = (deaths, recovered, infected) => {
+    return [
+      {
+        color: "red",
+        type: "spline",
+        name: "Deaths",
+        showInLegend: true,
+        dataPoints: deaths
       },
-      axisY : {
-        title: "Rate",
-        includeZero: false,
-        valueFormatString: "#%"
+      {
+        color: "green",
+        type: "spline",
+        name: "Recovered",
+        showInLegend: true,
+        dataPoints: recovered
       },
-      toolTip: {
-        shared: true
-      },
-      data: [
-        {
-          color: "red",
-          type: "spline",
-          name: "Death rate",
-          showInLegend: true,
-          dataPoints: dataPoints.deathRate
-        },
-        {
-          color: "orange",
-          type: "spline",
-          name: "Infection rate",
-          showInLegend: true,
-          dataPoints: dataPoints.infectionRate
-        }
-      ]
-    }
-    return (
-      <CanvasJSChart options={options} />
-    )
+      {
+        color: "orange",
+        type: "spline",
+        name: "Infected",
+        showInLegend: true,
+        dataPoints: infected
+      }
+    ]
   }
 
-  renderCharts = (title, dataPoints) => {
+  getRateDataPoints = (deathRate, infectionRate) => {
+    return [
+      {
+        color: "red",
+        type: "spline",
+        name: "Death rate",
+        showInLegend: true,
+        dataPoints: deathRate
+      },
+      {
+        color: "orange",
+        type: "spline",
+        name: "Infection rate",
+        showInLegend: true,
+        dataPoints: infectionRate
+      }
+    ]
+  }
+
+  getDailyNewCasesDataPoints = (dailyNewCases) => {
+    return [
+      {
+        color: "orange",
+        type: "spline",
+        name: "Death rate",
+        showInLegend: true,
+        dataPoints: dailyNewCases
+      }
+    ]
+  }
+
+  renderCharts = (title, { deaths, recovered, active, deathRate, infectionRate, dailyNewCases }) => {
     return (
       <>
         <p>{title}</p>
-        <div style={{
-          display: 'flex'
-        }}>
-          {this.renderChart(dataPoints, 'Linear')}
-          {this.renderChart(dataPoints, 'Logarithmic', { logarithmic: true })}
-          {this.renderRateChart(dataPoints)}
+        <div style={{ display: 'flex' }}>
+          {this.renderChart(this.getLinearDataPoints(deaths, recovered, active), 'Linear')}
+          {this.renderChart(this.getLinearDataPoints(deaths, recovered, active), 'Logarithmic', { logarithmic: true })}
+          {this.renderChart(this.getRateDataPoints(deathRate, infectionRate), 'Rates', { valueFormatString: "#%" })}
+          {this.renderChart(this.getDailyNewCasesDataPoints(dailyNewCases), 'Daily cases')}
         </div>
       </>
     )
