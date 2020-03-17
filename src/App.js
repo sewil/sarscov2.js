@@ -1,18 +1,11 @@
 import React from 'react'
 import csv from 'csvtojson'
 import _ from 'lodash'
-import logo from './logo.svg'
 import CanvasJSReact from './canvasjs/canvasjs.react'
 import './App.css'
+import { countriesOfInterest } from './config'
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
-
-const countriesOfInterest = [
-  'China',
-  'Italy',
-  'US',
-  'Sweden'
-]
 
 class App extends React.Component {
   constructor (props) {
