@@ -149,7 +149,7 @@ class App extends React.Component {
       {
         color: "orange",
         type: "spline",
-        name: "Infection rate",
+        name: "Infection growth rate",
         showInLegend: true,
         dataPoints: infectionRate
       }
