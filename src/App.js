@@ -161,7 +161,7 @@ class App extends React.Component {
       {
         color: "orange",
         type: "spline",
-        name: "Death rate",
+        name: "Daily new cases",
         showInLegend: true,
         dataPoints: dailyNewCases
       }
@@ -176,7 +176,7 @@ class App extends React.Component {
           {this.renderChart(this.getLinearDataPoints(deaths, recovered, active), 'Linear')}
           {this.renderChart(this.getLinearDataPoints(deaths, recovered, active), 'Logarithmic', { logarithmic: true })}
           {this.renderChart(this.getRateDataPoints(deathRate, infectionRate), 'Rates', { valueFormatString: "#%" })}
-          {this.renderChart(this.getDailyNewCasesDataPoints(dailyNewCases), 'Daily cases')}
+          {this.renderChart(this.getDailyNewCasesDataPoints(dailyNewCases), 'Daily new cases')}
         </div>
       </>
     )
