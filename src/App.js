@@ -55,6 +55,10 @@ class App extends React.Component {
     return confirmedDataPoints[index].y - deathsDataPoints[index].y - recoveredDataPoints[index].y
   }
 
+  filterNilDataPoints = (dataPoints) => {
+    return dataPoints?.filter(({ y }) => y > 0) ?? []
+  }
+
   mapDataPoints = (confirmedDataPoints, deathsDataPoints, recoveredDataPoints) => {
     const otherDataPoints = confirmedDataPoints.map((confirmedDataPoint, index2) => {
       const dY = deathsDataPoints[index2].y
@@ -119,21 +123,21 @@ class App extends React.Component {
         type: "spline",
         name: "Deaths",
         showInLegend: true,
-        dataPoints: deaths
+        dataPoints: this.filterNilDataPoints(deaths)
       },
       {
         color: "green",
         type: "spline",
         name: "Recovered",
         showInLegend: true,
-        dataPoints: recovered
+        dataPoints: this.filterNilDataPoints(recovered)
       },
       {
         color: "orange",
         type: "spline",
         name: "Infected",
         showInLegend: true,
-        dataPoints: infected
+        dataPoints: this.filterNilDataPoints(infected)
       }
     ]
   }
@@ -145,14 +149,14 @@ class App extends React.Component {
         type: "spline",
         name: "Death rate",
         showInLegend: true,
-        dataPoints: deathRate
+        dataPoints: this.filterNilDataPoints(deathRate)
       },
       {
         color: "orange",
         type: "spline",
         name: "Infection growth rate",
         showInLegend: true,
-        dataPoints: infectionRate
+        dataPoints: this.filterNilDataPoints(infectionRate)
       }
     ]
   }
@@ -164,7 +168,7 @@ class App extends React.Component {
         type: "spline",
         name: "Daily new cases",
         showInLegend: true,
-        dataPoints: dailyNewCases
+        dataPoints: this.filterNilDataPoints(dailyNewCases)
       }
     ]
   }
