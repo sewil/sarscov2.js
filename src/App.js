@@ -3,7 +3,7 @@ import csv from 'csvtojson'
 import _ from 'lodash'
 import CanvasJSReact from './canvasjs/canvasjs.react'
 import './App.css'
-import { countriesOfInterest } from './config'
+import { countriesOfInterest as defaultCountriesOfInterest } from './config'
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
@@ -13,7 +13,8 @@ class App extends React.Component {
     this.state = {
       data: [],
       total: [],
-      selectedChartIndex: 0
+      selectedChartIndex: 0,
+      countriesOfInterest: localStorage.getItem('countriesOfInterest')?.split(';').map(i => i.trim()) ?? defaultCountriesOfInterest
     }
   }
 
@@ -182,10 +183,22 @@ class App extends React.Component {
     )
   }
 
+  handleCountriesOfInterestChange = (e) => {
+    const value = e?.target?.value ?? ''
+    this.countriesOfInterestPending = value
+  }
+
+  handleCountriesOfInterestSubmit = e => {
+    e.preventDefault()
+    localStorage.setItem('countriesOfInterest', this.countriesOfInterestPending)
+    this.setState({ countriesOfInterest: this.countriesOfInterestPending?.split(';').map(i => i.trim()) ?? defaultCountriesOfInterest })
+  }
+
   render () {
+    const { countriesOfInterest } = this.state
     const countriesOfInterestDP = countriesOfInterest.map(countryOfInterest => ({
       country: countryOfInterest,
-      dataPoints: this.state.data?.find(i => i.country === countryOfInterest)?.dataPoints
+      dataPoints: this.state.data?.find(i => i.country.toLowerCase() === countryOfInterest.toLowerCase())?.dataPoints
     }))
     return (
       <div className="App">
@@ -197,6 +210,10 @@ class App extends React.Component {
           fontSize: 'calc(10px + 2vmin)',
           color: 'white'
         }}>
+          <form onSubmit={this.handleCountriesOfInterestSubmit}>
+            <label htmlFor='countriesOfInterest'>Countries of interest (Separate with semicolon)</label>
+            <input value={countriesOfInterest.join(';')} onChange={this.handleCountriesOfInterestChange} title='hello there' name='countriesOfInterest' />
+          </form>
           {this.renderCharts('Total', this.state.total)}
           {countriesOfInterestDP.map(({ country, dataPoints }) => dataPoints && this.renderCharts(country, dataPoints))}
         </div>
