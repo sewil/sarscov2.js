@@ -10,11 +10,14 @@ const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 class App extends React.Component {
   constructor (props) {
     super(props)
+    const countriesOfInterest = localStorage.getItem('countriesOfInterest') ?? defaultCountriesOfInterest.join(';')
     this.state = {
       data: [],
       total: [],
       selectedChartIndex: 0,
-      countriesOfInterest: localStorage.getItem('countriesOfInterest')?.split(';').map(i => i.trim()) ?? defaultCountriesOfInterest
+      countriesOfInterest,
+      countriesOfInterestPending: countriesOfInterest,
+      countriesOfInterestDataPoints: []
     }
   }
 
@@ -93,7 +96,10 @@ class App extends React.Component {
       dataPoints: this.mapDataPoints(confirmedData.countries[index].dataPoints, deathsData.countries[index].dataPoints, recoveredData.countries[index].dataPoints)
     }))
     const total = this.mapDataPoints(confirmedData.total, deathsData.total, recoveredData.total)
-    this.setState({ data, total })
+    this.setState({ data, total }, () => {
+      const countriesOfInterestDataPoints = this.getCountriesOfInterestDataPoints(this.state.countriesOfInterest)
+      this.setState({ countriesOfInterestDataPoints })
+    })
   }
 
   renderChart = (data, title, axisYOptions) => {
@@ -175,35 +181,47 @@ class App extends React.Component {
 
   renderCharts = (title, { deaths, recovered, active, deathRate, infectionRate, dailyNewCases }) => {
     return (
-      <>
+      <div key={title}>
         <p>{title}</p>
         <div style={{ display: 'flex' }}>
           {this.renderChart(this.getLinearDataPoints(deaths, recovered, active), 'Linear')}
           {this.renderChart(this.getLinearDataPoints(deaths, recovered, active), 'Logarithmic', { logarithmic: true })}
-          {this.renderChart(this.getRateDataPoints(deathRate, infectionRate), 'Rates', { valueFormatString: "#%" })}
+          {this.renderChart(this.getRateDataPoints(deathRate, infectionRate), 'Rates', { valueFormatString: "#%", minimum: 0 })}
           {this.renderChart(this.getDailyNewCasesDataPoints(dailyNewCases), 'Daily new cases')}
         </div>
-      </>
+      </div>
     )
   }
 
-  handleCountriesOfInterestChange = (e) => {
-    const value = e?.target?.value ?? ''
-    this.countriesOfInterestPending = value
+  handleCountriesOfInterestChange (e) {
+    this.setState({ countriesOfInterestPending: e.target.value })
   }
 
   handleCountriesOfInterestSubmit = e => {
     e.preventDefault()
-    localStorage.setItem('countriesOfInterest', this.countriesOfInterestPending)
-    this.setState({ countriesOfInterest: this.countriesOfInterestPending?.split(';').map(i => i.trim()) ?? defaultCountriesOfInterest })
+    const countriesOfInterest = this.state.countriesOfInterestPending
+    localStorage.setItem('countriesOfInterest', countriesOfInterest)
+    this.setState({
+      countriesOfInterest,
+      countriesOfInterestDataPoints: this.getCountriesOfInterestDataPoints(countriesOfInterest)
+    })
+  }
+
+  getCountriesOfInterestDataPoints = (countriesOfInterest) => {
+    const { data } = this.state
+    const countriesOfInterestDP = countriesOfInterest.split(';').map(countryOfInterest => {
+      const dataPoints = data?.find(i => i.country.toLowerCase() === countryOfInterest.toLowerCase())?.dataPoints
+      console.log({ dataPoints })
+      return {
+        country: countryOfInterest,
+        dataPoints
+      }
+    })
+    return countriesOfInterestDP
   }
 
   render () {
-    const { countriesOfInterest } = this.state
-    const countriesOfInterestDP = countriesOfInterest.map(countryOfInterest => ({
-      country: countryOfInterest,
-      dataPoints: this.state.data?.find(i => i.country.toLowerCase() === countryOfInterest.toLowerCase())?.dataPoints
-    }))
+    const { countriesOfInterestDataPoints } = this.state
     return (
       <div className="App">
         <div style={{
@@ -216,10 +234,10 @@ class App extends React.Component {
         }}>
           <form onSubmit={this.handleCountriesOfInterestSubmit}>
             <label htmlFor='countriesOfInterest'>Countries of interest (Separate with semicolon)</label>
-            <input value={countriesOfInterest.join(';')} onChange={this.handleCountriesOfInterestChange} title='hello there' name='countriesOfInterest' />
+            <input value={this.state.countriesOfInterestPending} onChange={this.handleCountriesOfInterestChange.bind(this)} name='countriesOfInterest' />
           </form>
           {this.renderCharts('Total', this.state.total)}
-          {countriesOfInterestDP.map(({ country, dataPoints }) => dataPoints && this.renderCharts(country, dataPoints))}
+          {countriesOfInterestDataPoints.map(({ country, dataPoints }) => dataPoints && this.renderCharts(country, dataPoints))}
         </div>
       </div>
     );
